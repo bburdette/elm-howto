@@ -58,10 +58,13 @@ playbackView playbackParams =
         , autoplay True
         , property "volume" (Json.Encode.string (String.fromFloat playbackParams.volume))
         , property "playbackRate" (Json.Encode.string (String.fromFloat playbackParams.playbackRate))
-        , property "mozPreservesPitch" (Json.Encode.bool False)
-        , property "webkitPreservesPitch" (Json.Encode.bool False)
 
-        -- , property "preservesPitch" (Json.Encode.bool False)
+        -- works for firefox.
+        , property "mozPreservesPitch" (Json.Encode.bool False)
+
+        -- these do nothing, apparently
+        , property "webkitPreservesPitch" (Json.Encode.bool False)
+        , property "preservesPitch" (Json.Encode.bool False)
         ]
         [ source [ src playbackParams.sourceUrl ] [] ]
 
