@@ -15,6 +15,7 @@ import Json.Encode
 type alias PlaybackParams =
     { sourceUrl : String
     , volume : Float
+    , playbackRate : Float
     }
 
 
@@ -27,6 +28,7 @@ type alias Model =
 type Msg
     = SelectAudioSourceUrl String
     | SelectPlaybackVolume Float
+    | SelectPlaybackRate Float
     | StartPlayback
 
 
@@ -35,6 +37,7 @@ init =
     { selectedPlaybackParams =
         { sourceUrl = "http://dict.leo.org/media/audio/ZXOapx_FyRojukaMRHKS_w.mp3"
         , volume = 0.7
+        , playbackRate = 1.0
         }
     , listPlayback = []
     }
@@ -50,7 +53,16 @@ main =
 
 playbackView : PlaybackParams -> Html.Html msg
 playbackView playbackParams =
-    audio [ controls False, autoplay True, property "volume" (Json.Encode.string (String.fromFloat playbackParams.volume)) ]
+    audio
+        [ controls False
+        , autoplay True
+        , property "volume" (Json.Encode.string (String.fromFloat playbackParams.volume))
+        , property "playbackRate" (Json.Encode.string (String.fromFloat playbackParams.playbackRate))
+        , property "mozPreservesPitch" (Json.Encode.bool False)
+        , property "webkitPreservesPitch" (Json.Encode.bool False)
+
+        -- , property "preservesPitch" (Json.Encode.bool False)
+        ]
         [ source [ src playbackParams.sourceUrl ] [] ]
 
 
@@ -65,6 +77,9 @@ view model =
 
         selectedPlaybackVolume =
             selectedPlaybackParams.volume
+
+        selectedPlaybackRate =
+            selectedPlaybackParams.playbackRate
     in
     div []
         [ div []
@@ -84,6 +99,19 @@ view model =
                         ]
                         []
                     , text <| (((selectedPlaybackVolume * 100) |> round |> String.fromInt) ++ "%")
+                    ]
+                , div [] [ text "-" ]
+                , div [] [ text "playback rate " ]
+                , div []
+                    [ input
+                        [ type_ "range"
+                        , HA.min "0"
+                        , HA.max "200"
+                        , value <| String.fromFloat (selectedPlaybackRate * 100)
+                        , onInput (String.toFloat >> Maybe.withDefault 100 >> (*) 0.01 >> SelectPlaybackRate)
+                        ]
+                        []
+                    , text <| (((selectedPlaybackRate * 100) |> round |> String.fromInt) ++ "%")
                     ]
                 ]
             , button [ onClick StartPlayback ] [ text "click to start playback" ]
@@ -108,6 +136,9 @@ updatePlaybackParams msg playbackParams =
         SelectPlaybackVolume volume ->
             { playbackParams | volume = volume }
 
+        SelectPlaybackRate rate ->
+            { playbackParams | playbackRate = rate }
+
         _ ->
             playbackParams
 
@@ -122,6 +153,9 @@ update msg model =
         StartPlayback ->
             startPlayback withPlaybackParams
 
+        SelectPlaybackRate rate ->
+            { withPlaybackParams | listPlayback = model.listPlayback |> List.map (withRate rate) }
+
         SelectPlaybackVolume volume ->
             { withPlaybackParams | listPlayback = model.listPlayback |> List.map (withVolume volume) }
 
@@ -132,3 +166,8 @@ update msg model =
 withVolume : Float -> PlaybackParams -> PlaybackParams
 withVolume volume paramsBefore =
     { paramsBefore | volume = volume }
+
+
+withRate : Float -> PlaybackParams -> PlaybackParams
+withRate rate paramsBefore =
+    { paramsBefore | playbackRate = rate }
